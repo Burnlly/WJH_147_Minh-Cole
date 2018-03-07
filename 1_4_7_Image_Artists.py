@@ -2,12 +2,12 @@ import PIL
 import os.path  
 import PIL.ImageDraw            
 
-def fillerName(original_image, logo_size, logo, st):
+def logo_function(original_image, logo_size, logo, st, location):
     """ Adds a logo to the top left of any image given.
     
     Takes 4 arguments, st being a true or false value deciding whether
     to make it transparent or not. Logo_size is the percent of the smaller
-    side you want the logo to take up: 0<logo_size<1. The rest fo the arguments
+    side you want the logo to take up: 0<logo_size<=1. The rest of the arguments
     are self explanitory image files.
     """
     #set the radius of the rounded corners
@@ -32,7 +32,16 @@ def fillerName(original_image, logo_size, logo, st):
                     pix[(w,h)] = (r,g,b,a - 50) 
                 
     result = original_image.copy()
-    result.paste(rlogo, (0,0), rlogo)
+    if location == 'tl':
+        result.paste(rlogo, (0,0), rlogo)
+    elif location == 'br':
+        result.paste(rlogo, (width - position, height - position), rlogo)
+    elif location == 'tr':
+        result.paste(rlogo, (width - position,0), rlogo)
+    elif location == 'bl':
+        result.paste(rlogo, (0, height - position), rlogo)
+    else:
+        raise ValueError("Invalid position argument")
     return result
     
 def get_images(directory=None):
@@ -61,12 +70,27 @@ def get_images(directory=None):
             pass # do nothing with errors tying to open non-images
     return image_list, file_list
 
-def filler_all_images(directory=None, size=0.3, st = False):
-    """ Saves a modfied version of each image in directory.
+def logo_all_images(directory=None, size=0.3, st=False, location='tl'):
+    """ 
+    
+    Saves a modfied version of each image in directory.
+    
+    No Arguments required, but you can specify the directory, size, whether
+    you want it to be transparent (st), and the location.
+    
+     - directory takes a string. Default is None
+     - size takes a float 0 < size <= 1. Default value is 0.3
+     - st takes a boolean. Default value is false.
+     - location takes a string:
+         - 'tl' for top left of the image
+         - 'tr' for top right
+         - 'bl' for bottom left
+         - 'br' for bottom right
+         Default is 'tl'
     
     Uses current directory if no directory is specified. 
-    Places images in subdirectory 'modified', creating it if it does not exist.
-    New image files are of type PNG and have transparent rounded corners.
+    Places images in subdirectory 'neweggs', creating it if it does not exist.
+    New image files have the logo in the top left corner.
     """
     
     if directory == None:
@@ -90,8 +114,7 @@ def filler_all_images(directory=None, size=0.3, st = False):
         filename, filetype = file_list[n].split('.')
         
         # Round the corners with radius = 30% of short side
-        new_image = fillerName(image_list[n], size, logo, st)
+        new_image = logo_function(image_list[n], size, logo, st, location)
         #save the altered image, suing PNG to retain transparency
         new_image_filename = os.path.join(new_directory, filename + '.png')
         new_image.save(new_image_filename)    
-
